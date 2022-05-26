@@ -25,10 +25,46 @@ tester.run("destroy-service-provider", rule, {
     },
     {
       code: `
+        @Component()
+        export class WelcomeComponent implements OnInit {
+          constructor(
+            private destroy$: DestroyService,
+          ) {}
+        }`,
+    },
+    {
+      code: `
+        @Component({})
+        export class WelcomeComponent implements OnInit {
+          constructor(
+            private destroy$: DestroyService,
+          ) {}
+        }`,
+    },
+    {
+      code: `
         @Directive({
           selector: 'my-directive',
           providers: [DestroyService]
         })
+        export class MyDirective implements OnInit {
+          constructor(
+            private destroy$: DestroyService,
+          ) {}
+        }`,
+    },
+    {
+      code: `
+        @Directive()
+        export class MyDirective implements OnInit {
+          constructor(
+            private destroy$: DestroyService,
+          ) {}
+        }`,
+    },
+    {
+      code: `
+        @Directive({})
         export class MyDirective implements OnInit {
           constructor(
             private destroy$: DestroyService,

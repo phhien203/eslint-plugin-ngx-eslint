@@ -5,6 +5,14 @@ const rule: Rule.RuleModule = {
     return {
       "ClassDeclaration > Decorator[expression.callee.name=/^(Component|Directive)$/]":
         (node: any) => {
+          const isDecoratorEmpty =
+            !node.expression.arguments.length ||
+            !node.expression.arguments[0].properties.length;
+
+          if (isDecoratorEmpty) {
+            return;
+          }
+
           // whether component has providers decorator property
           const providersProperty =
             node.expression.arguments[0].properties.find((property: any) => {
