@@ -1,26 +1,53 @@
-import { Rule } from "eslint";
+import {
+  CallExpression,
+  ClassDeclaration,
+  Decorator,
+  MethodDefinition,
+  ObjectExpression,
+  Property,
+} from "@typescript-eslint/types/dist/generated/ast-spec";
+import { ESLintUtils } from "@typescript-eslint/utils";
+import { repositoryUrl } from "../utils";
 
-const rule: Rule.RuleModule = {
-  create: context => {
+export const ruleName = "destroy-service-provider";
+
+type MessageIds = "missing";
+
+type Options = [
+  {
+    /**
+     * @default DestroyService
+     */
+    destroyServiceName?: string;
+  },
+];
+
+const createRule = ESLintUtils.RuleCreator(name => `${repositoryUrl}#${name}`);
+
+export const rule = createRule<Options, MessageIds>({
+  create(context, [options]) {
     return {
       "ClassDeclaration > Decorator[expression.callee.name=/^(Component|Directive)$/]":
-        (node: any) => {
+        (node: Decorator) => {
+          const nodeExpression = node.expression as CallExpression;
           const isDecoratorEmpty =
-            !node.expression.arguments.length ||
-            !node.expression.arguments[0].properties.length;
+            !nodeExpression.arguments.length ||
+            !(nodeExpression.arguments[0] as ObjectExpression).properties
+              .length;
 
           if (isDecoratorEmpty) {
             return;
           }
 
           // whether component has providers decorator property
-          const providersProperty =
-            node.expression.arguments[0].properties.find((property: any) => {
-              return (
-                property.key.type === "Identifier" &&
-                property.key.name === "providers"
-              );
-            });
+          const providersProperty = (
+            nodeExpression.arguments[0] as ObjectExpression
+          ).properties.find((property: any) => {
+            return (
+              property.key.type === "Identifier" &&
+              property.key.name === "providers"
+            );
+          }) as Property;
 
           let providerValuesHasDestroyService: boolean = false;
 
@@ -31,7 +58,10 @@ const rule: Rule.RuleModule = {
           ) {
             providerValuesHasDestroyService =
               !!providersProperty.value.elements.find((e: any) => {
-                return e.type === "Identifier" && e.name === "DestroyService";
+                return (
+                  e.type === "Identifier" &&
+                  e.name === options.destroyServiceName
+                );
               });
           }
 
@@ -40,9 +70,9 @@ const rule: Rule.RuleModule = {
             (providersProperty && !providerValuesHasDestroyService)
           ) {
             // get constructor
-            const classDeclaration = node.parent;
+            const classDeclaration = (node as any).parent as ClassDeclaration;
             const classElements = classDeclaration.body.body;
-            const classConstructor = classElements.find((e: any) => {
+            const classConstructor = classElements.find(e => {
               return e.type === "MethodDefinition" && e.kind === "constructor";
             });
 
@@ -50,7 +80,8 @@ const rule: Rule.RuleModule = {
 
             if (classConstructor) {
               // find DestroyService
-              const params: any[] = classConstructor.value.params;
+              const params: any[] = (classConstructor as MethodDefinition).value
+                .params;
               hasDestroy = params.find(param => {
                 return (
                   param.type === "TSParameterProperty" &&
@@ -60,7 +91,7 @@ const rule: Rule.RuleModule = {
                   param.parameter.typeAnnotation.typeAnnotation.typeName
                     .type === "Identifier" &&
                   param.parameter.typeAnnotation.typeAnnotation.typeName
-                    .name === "DestroyService"
+                    .name === options.destroyServiceName
                 );
               });
             }
@@ -68,13 +99,40 @@ const rule: Rule.RuleModule = {
             if (hasDestroy) {
               context.report({
                 loc: hasDestroy.loc,
-                message: `Please provide DestroyService in ${node.expression.callee.name} class providers.`,
+                messageId: "missing",
+                data: {
+                  className: (nodeExpression as any).callee.name,
+                },
               });
             }
           }
         },
     };
   },
-};
-
-export = rule;
+  name: ruleName,
+  meta: {
+    type: "problem",
+    docs: {
+      description:
+        "Destroy service should be provided in Component/Directive providers/viewProviders array.",
+      recommended: "error",
+    },
+    messages: {
+      missing:
+        "Please provide DestroyService in {{className}} class providers.",
+    },
+    schema: [
+      {
+        type: "object",
+        properties: {
+          destroyServiceName: {
+            type: "string",
+            default: "DestroyService",
+          },
+        },
+        additionalProperties: false,
+      },
+    ],
+  },
+  defaultOptions: [{ destroyServiceName: "DestroyService" }],
+});
