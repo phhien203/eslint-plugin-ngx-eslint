@@ -1,10 +1,8 @@
-import { RuleTester } from "eslint";
+import { ESLintUtils } from "@typescript-eslint/utils";
+import { rule } from "./destroy-service-provider";
 
-import rule from "./destroy-service-provider";
-
-const tester = new RuleTester({
-  parser: require.resolve("@typescript-eslint/parser"),
-  parserOptions: { ecmaVersion: 2015 },
+const tester = new ESLintUtils.RuleTester({
+  parser: "@typescript-eslint/parser",
 });
 
 tester.run("destroy-service-provider", rule, {
@@ -88,8 +86,10 @@ tester.run("destroy-service-provider", rule, {
         }`,
       errors: [
         {
-          message:
-            "Please provide DestroyService in Component class providers.",
+          messageId: "missing",
+          data: {
+            className: "Component",
+          },
         },
       ],
     },
@@ -105,8 +105,30 @@ tester.run("destroy-service-provider", rule, {
         }`,
       errors: [
         {
-          message:
-            "Please provide DestroyService in Directive class providers.",
+          messageId: "missing",
+          data: {
+            className: "Directive",
+          },
+        },
+      ],
+    },
+    {
+      code: `
+        @Directive({
+          selector: 'my-directive',
+        })
+        export class MyDirective implements OnInit {
+          constructor(
+            private destroy$: Destroy,
+          ) {}
+        }`,
+      options: [{ destroyServiceName: "Destroy" }],
+      errors: [
+        {
+          messageId: "missing",
+          data: {
+            className: "Directive",
+          },
         },
       ],
     },

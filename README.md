@@ -10,6 +10,8 @@ This is a repository containing custom ESLint rules for Angular projects
 
 ## Usage
 
+### `destroy-service-provider`
+
 Edit your eslint config file as follow
 
 ```json

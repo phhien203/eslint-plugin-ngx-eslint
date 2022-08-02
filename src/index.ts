@@ -1,7 +1,7 @@
-import destroyServiceProvider from "./rules/destroy-service-provider";
+import * as destroyServiceProviderRule from "./rules/destroy-service-provider";
 
 export = {
   rules: {
-    "destroy-service-provider": destroyServiceProvider,
+    [destroyServiceProviderRule.ruleName]: destroyServiceProviderRule.rule,
   },
 };
