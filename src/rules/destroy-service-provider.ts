@@ -102,6 +102,7 @@ export const rule = createRule<Options, MessageIds>({
                 messageId: "missing",
                 data: {
                   className: (nodeExpression as any).callee.name,
+                  destroyServiceName: options.destroyServiceName,
                 },
               });
             }
@@ -119,7 +120,7 @@ export const rule = createRule<Options, MessageIds>({
     },
     messages: {
       missing:
-        "Please provide DestroyService in {{className}} class providers.",
+        "Please provide {{destroyServiceName}} in {{className}} class providers.",
     },
     schema: [
       {
