@@ -45,6 +45,10 @@ If your destroy service class name is different than `DestroyService`, the confi
 }
 ```
 
+Result
+
+![ngx-eslint-destroy-service-provider rule](src/images/ngx-eslint-destroy-service-provider.png)
+
 ## LICENSE
 
 MIT
